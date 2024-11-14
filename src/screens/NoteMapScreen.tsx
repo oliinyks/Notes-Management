@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Text, StyleSheet, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -12,6 +12,7 @@ interface NoteData {
 
 const NoteMapScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [notes, setNotes] = useState<NoteData[]>([]);
+  const mapRef = useRef<MapView>(null); // використання рефа для карти
 
   useEffect(() => {
     const fetchNotes = async () => {
@@ -23,8 +24,20 @@ const NoteMapScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     fetchNotes();
   }, []);
 
-  // We filter notes that have a location
+  //We filter notes that have a location
   const notesWithLocation = notes.filter((note) => note.location);
+
+  useEffect(() => {
+    if (notesWithLocation.length > 0 && mapRef.current) {
+      mapRef.current.fitToCoordinates(
+        notesWithLocation.map((note) => note.location!),
+        {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        }
+      );
+    }
+  }, [notesWithLocation]);
 
   return (
     <View style={styles.container}>
@@ -32,19 +45,14 @@ const NoteMapScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         <Text style={styles.title}>Note Map</Text>
       </View>
       {notesWithLocation.length > 0 ? (
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: 37.78825,
-            longitude: -122.4324,
-            latitudeDelta: 0.1,
-            longitudeDelta: 0.1,
-          }}
-        >
+        <MapView ref={mapRef} style={styles.map}>
           {notesWithLocation.map((note) => (
             <Marker
               key={note.id}
-              coordinate={note.location!}
+              coordinate={{
+                latitude: note.location!.latitude,
+                longitude: note.location!.longitude,
+              }}
               title={note.title}
               description={note.body}
               onPress={() => navigation.navigate("NoteEditorScreen", { note })}

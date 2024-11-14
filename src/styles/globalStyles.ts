@@ -12,6 +12,5 @@ export const gStyle = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 16,
     lineHeight: 22,
-    fontFamily: "RobotoRegular",
   },
 });
